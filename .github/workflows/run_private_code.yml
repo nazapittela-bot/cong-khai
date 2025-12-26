@@ -179,6 +179,14 @@ jobs:
 
           # Lọc nhạc
           python -m pip install demucs
+          # audio-separator: tách nhạc (giữ lời thoại) nhanh hơn demucs cho file dài
+          # Lưu ý: torch/torchaudio đã được cài từ CPU index ở trên, nên pip sẽ KHÔNG tải torch CUDA nặng.
+          python -m pip install "audio-separator[cpu]==0.40.0" --upgrade-strategy only-if-needed
+          audio-separator --help | head -n 2 || true
+          python - <<'PY'
+          import audio_separator  # noqa: F401
+          print('[OK] audio-separator import OK')
+          PY
 
           python -c "import whisper, torch, torchaudio; print('Torch:', torch.__version__, 'Torchaudio:', torchaudio.__version__, 'Whisper OK')"
 
