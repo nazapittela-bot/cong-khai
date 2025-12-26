@@ -166,15 +166,36 @@ jobs:
           python -m pip install pillow opencv-python-headless numpy gdown imageio-ffmpeg
           # Google API (nếu upload YouTube)
           python -m pip install google-api-python-client google-auth google-auth-httplib2 google-auth-oauthlib
-          # Torch CPU + Torchaudio (đúng index CPU)
-          python -m pip install "torch==2.3.1" "torchaudio==2.3.1" --index-url https://download.pytorch.org/whl/cpu
-          # Whisper (gói đúng tên: openai-whisper)
-          python -m pip install "openai-whisper==20231117"
-          # Loc Nhac (demucs + audio-separator)
-          python -m pip install -U demucs
-          python -m pip install "audio-separator[cpu]"
-          # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
-          python -c "import sys; import whisper, torch, torchaudio; print('Whisper/Torch OK:', whisper.__version__, torch.__version__)"
+
+          # ---- Pin Torch CPU stack (khớp Whisper/Torchaudio) ----
+          python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+            "torch==2.3.1+cpu" \
+            "torchaudio==2.3.1+cpu" \
+            "torchvision==0.18.1+cpu"
+
+          # ---- Constraints để pip KHÔNG tự nâng torch/torchaudio/torchvision/triton ----
+          printf "%s\n" \
+            "torch==2.3.1+cpu" \
+            "torchaudio==2.3.1+cpu" \
+            "torchvision==0.18.1+cpu" \
+            "triton<3" \
+            "openai-whisper==20231117" \
+            > /tmp/constraints_main.txt
+
+          # Whisper
+          python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+            -c /tmp/constraints_main.txt \
+            "openai-whisper==20231117"
+
+          # Lọc nhạc (demucs + audio-separator) — cài với constraints để không phá Torch/Torchaudio
+          python -m pip install -c /tmp/constraints_main.txt demucs
+          python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+            -c /tmp/constraints_main.txt \
+            "audio-separator[cpu]==0.40.0"
+
+          # Kiểm tra import
+          python -c "import whisper, torch, torchaudio; print('Whisper/Torch/Torchaudio OK:', whisper.__version__, torch.__version__, torchaudio.__version__)"
+
 
       - name: Install Python deps
         run: |
@@ -182,11 +203,10 @@ jobs:
           REQ=$(ls private-src/**/requirements*.txt 2>/dev/null | head -n1 || true)
           if [ -n "$REQ" ]; then
             echo "[INFO] Using requirements: $REQ"
-            pip install -r "$REQ"
+            pip install -r "$REQ" -c /tmp/constraints_main.txt --extra-index-url https://download.pytorch.org/whl/cpu
           else
             echo "[INFO] No requirements*.txt found — install tối thiểu"
             pip install Pillow opencv-python-headless numpy gdown \
-                        "audio-separator[cpu]" \
                         google-api-python-client google-auth google-auth-httplib2 \
                         imageio-ffmpeg
           fi
