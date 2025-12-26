@@ -21,6 +21,13 @@ jobs:
       YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
       
+      # ép bật lọc nhạc
+      REMOVE_MUSIC: "1"
+      AUDIOSEP_ENABLE: "1"
+      # tuỳ chọn (audio dài thì chunk cho đỡ chết)
+      AUDIOSEP_CHUNK_SEC: "1800"
+      # nếu bạn muốn giới hạn audio-separator (đỡ chạy 9-10 tiếng audio quá lâu), ví dụ 2 giờ:
+      # MUSIC_REMOVE_MAX_SEC: "7200"
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
