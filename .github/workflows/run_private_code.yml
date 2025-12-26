@@ -28,7 +28,7 @@ jobs:
       AUDIOSEP_MDX_SEGMENT: "256"
       AUDIOSEP_MDX_OVERLAP: "0.0"
       AUDIOSEP_MDX_BATCH: "4"
-
+      AUDIOSEP_MAX_WORKERS: "2"
       # Giảm số chunk (tùy): 3600 = mỗi chunk 1 giờ => 9.6h chỉ còn ~10 chunk
       AUDIOSEP_CHUNK_SEC: "3600"
 
