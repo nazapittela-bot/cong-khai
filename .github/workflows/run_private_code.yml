@@ -140,6 +140,16 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache separator models (audio-separator / demucs)
+        uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/audio-separator-models
+            ~/.cache/torch/hub/checkpoints
+          key: ${{ runner.os }}-sepmodels-v1
+          restore-keys: |
+            ${{ runner.os }}-sepmodels-
+
       - name: Install system deps (ffmpeg)
         run: |
           sudo apt-get update
@@ -163,8 +173,9 @@ jobs:
           python -m pip install "torch==2.3.1" "torchaudio==2.3.1" --index-url https://download.pytorch.org/whl/cpu
           # Whisper (gói đúng tên: openai-whisper)
           python -m pip install "openai-whisper==20231117"
-          # Loc Nhac
+          # Loc Nhac (demucs + audio-separator)
           python -m pip install -U demucs
+          python -m pip install "audio-separator[cpu]"
           # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
           python -c "import sys; import whisper, torch, torchaudio; print('Whisper/Torch OK:', whisper.__version__, torch.__version__)"
 
@@ -178,6 +189,7 @@ jobs:
           else
             echo "[INFO] No requirements*.txt found — install tối thiểu"
             pip install Pillow opencv-python-headless numpy gdown \
+                        "audio-separator[cpu]" \
                         google-api-python-client google-auth google-auth-httplib2 \
                         imageio-ffmpeg
           fi
@@ -185,6 +197,16 @@ jobs:
       # CHẠY CODE trong repo PRIVATE (upload YouTube trực tiếp)
       - name: Run pipeline in PRIVATE
         working-directory: ${{ steps.find_script.outputs.dir }}
+        env:
+          # Ưu tiên audio-separator cho audio dài (nhanh hơn demucs trên CPU runner)
+          AUDIOSEP_ENABLE: "1"
+          AUDIOSEP_MODE: "fast"
+          AUDIOSEP_MODEL_DIR: "/tmp/audio-separator-models"
+          AUDIOSEP_CHUNK_SEC: "1200"
+          AUDIOSEP_OUTPUT_FORMAT: "m4a"
+          AUDIOSEP_OUTPUT_BITRATE: "128k"
+          # Demucs chỉ chạy full cho file <= 2 giờ (tránh bị hủy với video dài)
+          MUSIC_REMOVE_MAX_SEC: "7200"
         run: |
           set -e
           python -u scripts/generate_thumbnails.py
