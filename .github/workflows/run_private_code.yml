@@ -1,10 +1,6 @@
 name: run-private-code
 
 on:
-  schedule:
-    - cron: "0 22 * * *"  # chạy 4h sáng 
-    - cron: "0 4 * * *"   # chạy 10h sáng 
-    - cron: "0 10 * * *"   # chạy 4h chiều 
   
  
   workflow_dispatch: {}
@@ -153,42 +149,52 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install Python libs
+        shell: bash
         run: |
+          set -e
           python -m pip install --upgrade pip setuptools wheel
+
+          # Torch CPU stack (pin để không bị package khác kéo CUDA)
+          python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+            "torch==2.3.1+cpu" \
+            "torchaudio==2.3.1+cpu" \
+            "torchvision==0.18.1+cpu"
+
+          cat > /tmp/constraints.txt <<'EOF'
+          torch==2.3.1+cpu
+          torchaudio==2.3.1+cpu
+          torchvision==0.18.1+cpu
+          triton==2.3.1
+          openai-whisper==20231117
+          EOF
+
+          # Whisper (giữ đúng triton<3)
+          python -m pip install -c /tmp/constraints.txt triton==2.3.1
+          python -m pip install -c /tmp/constraints.txt "openai-whisper==20231117"
+
           # Libs ảnh / video phụ trợ
           python -m pip install pillow opencv-python-headless numpy gdown imageio-ffmpeg
           # Google API (nếu upload YouTube)
           python -m pip install google-api-python-client google-auth google-auth-httplib2 google-auth-oauthlib
-          # Torch CPU + Torchaudio (đúng index CPU)
-          # Pin torch stack để không bị package khác kéo torch CUDA
-cat > /tmp/constraints.txt << 'EOF'
-torch==2.3.1
-torchaudio==2.3.1
-torchvision==0.18.1
-triton==2.3.1
-EOF
-python -m pip install -c /tmp/constraints.txt --index-url https://download.pytorch.org/whl/cpu \
-  "torch==2.3.1" "torchaudio==2.3.1" "torchvision==0.18.1"
 
-          # Whisper (gói đúng tên: openai-whisper)
-          python -m pip install "openai-whisper==20231117"
-          # Loc Nhac
-          python -m pip install -U demucs
-          # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
-          python -c "import sys; import whisper, torch, torchaudio; print('Whisper/Torch OK:', whisper.__version__, torch.__version__)"
+          # Lọc nhạc
+          python -m pip install demucs
+
+          python -c "import whisper, torch, torchaudio; print('Torch:', torch.__version__, 'Torchaudio:', torchaudio.__version__, 'Whisper OK')"
 
       - name: Install Python deps
+        shell: bash
         run: |
           set -e
           REQ=$(ls private-src/**/requirements*.txt 2>/dev/null | head -n1 || true)
           if [ -n "$REQ" ]; then
             echo "[INFO] Using requirements: $REQ"
-            pip install -r "$REQ" -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu
-else
+            python -m pip install -r "$REQ" -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu
+          else
             echo "[INFO] No requirements*.txt found — install tối thiểu"
-            pip install Pillow opencv-python-headless numpy gdown \
-                        google-api-python-client google-auth google-auth-httplib2 \
-                        imageio-ffmpeg
+            python -m pip install Pillow opencv-python-headless numpy gdown \
+              google-api-python-client google-auth google-auth-httplib2 \
+              imageio-ffmpeg
           fi
 
       # CHẠY CODE trong repo PRIVATE (upload YouTube trực tiếp)
