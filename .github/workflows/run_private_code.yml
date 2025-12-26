@@ -35,6 +35,10 @@ jobs:
       AUDIOSEP_MODE: "auto"         # hoặc "fast" nếu bạn muốn luôn luôn bỏ ML
       MUSIC_REMOVE_MAX_SEC: "7200"  # 2 giờ; audio > 2h => chạy ffmpeg vocal-filter
 
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
 
 
     steps:
