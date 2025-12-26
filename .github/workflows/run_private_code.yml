@@ -41,6 +41,11 @@ jobs:
       NUMEXPR_NUM_THREADS: "1"
 
 
+      # chon thumb vaf tieu de bat dau
+      SEQ_BASE_RUN: "21"
+      TITLE_START: "4"
+      THUMB_START: "4"
+
     steps:
       - name: Checkout wrapper (repo PUBLIC)
         uses: actions/checkout@v4
