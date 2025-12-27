@@ -42,7 +42,7 @@ jobs:
 
 
       # chon thumb vaf tieu de bat dau
-      SEQ_BASE_RUN: "21"
+      SEQ_BASE_RUN: "22"
       TITLE_START: "4"
       THUMB_START: "4"
 
