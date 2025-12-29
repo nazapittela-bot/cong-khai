@@ -1,12 +1,8 @@
 name: run-private-code
 
 on:
-  schedule:
-    - cron: "0 21 * * *"  # chạy 4h sáng 
-    - cron: "0 4 * * *"   # chạy 10h sáng 
-    - cron: "0 11 * * *"   # chạy 4h chiều 
+  
     
- 
   workflow_dispatch: {}
 
 
@@ -25,30 +21,6 @@ jobs:
       YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
       
-      # ép bật lọc nhạc
-      REMOVE_MUSIC: "1"
-      AUDIOSEP_ENABLE: "1"
-      # TỐC ĐỘ: tránh bị convert ONNX -> PyTorch
-      AUDIOSEP_MDX_SEGMENT: "256"
-      AUDIOSEP_MDX_OVERLAP: "0.0"
-      AUDIOSEP_MDX_BATCH: "4"
-      AUDIOSEP_MAX_WORKERS: "2"
-      # Giảm số chunk (tùy): 3600 = mỗi chunk 1 giờ => 9.6h chỉ còn ~10 chunk
-      AUDIOSEP_CHUNK_SEC: "3600"
-
-      AUDIOSEP_MODE: "auto"         # hoặc "fast" nếu bạn muốn luôn luôn bỏ ML
-      MUSIC_REMOVE_MAX_SEC: "7200"  # 2 giờ; audio > 2h => chạy ffmpeg vocal-filter
-
-      OMP_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      NUMEXPR_NUM_THREADS: "1"
-
-
-      # chon thumb vaf tieu de bat dau
-      SEQ_BASE_RUN: "22"
-      TITLE_START: "4"
-      THUMB_START: "4"
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
@@ -164,10 +136,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system deps (ffmpeg)
+      - name: Install system deps (ffmpeg + libsndfile)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg libsndfile1
+
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -177,60 +150,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install Python libs
-        shell: bash
         run: |
-          set -e
           python -m pip install --upgrade pip setuptools wheel
-
-          # Torch CPU stack (pin để không bị package khác kéo CUDA)
-          python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
-            "torch==2.3.1+cpu" \
-            "torchaudio==2.3.1+cpu" \
-            "torchvision==0.18.1+cpu"
-
-          cat > /tmp/constraints.txt <<'EOF'
-          torch==2.3.1+cpu
-          torchaudio==2.3.1+cpu
-          torchvision==0.18.1+cpu
-          triton==2.3.1
-          openai-whisper==20231117
-          EOF
-
-          # Whisper (giữ đúng triton<3)
-          python -m pip install -c /tmp/constraints.txt triton==2.3.1
-          python -m pip install -c /tmp/constraints.txt "openai-whisper==20231117"
-
           # Libs ảnh / video phụ trợ
           python -m pip install pillow opencv-python-headless numpy gdown imageio-ffmpeg
           # Google API (nếu upload YouTube)
           python -m pip install google-api-python-client google-auth google-auth-httplib2 google-auth-oauthlib
+          # Torch CPU + Torchaudio (đúng index CPU)
+          python -m pip install "torch==2.3.1" "torchaudio==2.3.1" --index-url https://download.pytorch.org/whl/cpu
+          # Whisper (gói đúng tên: openai-whisper)
+          python -m pip install "openai-whisper==20231117"
+          
+          # NEW: inaSpeechSegmenter (lọc nhạc / speech-music segmentation)
+          python -m pip install "inaSpeechSegmenter==0.8.0"
 
-          # Lọc nhạc
-          python -m pip install demucs
-          # audio-separator: tách nhạc (giữ lời thoại) nhanh hơn demucs cho file dài
-          # Lưu ý: torch/torchaudio đã được cài từ CPU index ở trên, nên pip sẽ KHÔNG tải torch CUDA nặng.
-          python -m pip install "audio-separator[cpu]==0.40.0" --upgrade-strategy only-if-needed
-          audio-separator --help | head -n 2 || true
-          python - <<'PY'
-          import audio_separator  # noqa: F401
-          print('[OK] audio-separator import OK')
-          PY
+          # (tuỳ chọn) test import cho chắc
+          python -c "from inaSpeechSegmenter import Segmenter; print('inaSpeechSegmenter OK')"
 
-          python -c "import whisper, torch, torchaudio; print('Torch:', torch.__version__, 'Torchaudio:', torchaudio.__version__, 'Whisper OK')"
-
+          # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
+          python -c "import sys; import whisper, torch, torchaudio; print('Whisper/Torch OK:', whisper.__version__, torch.__version__)"
+          
       - name: Install Python deps
-        shell: bash
         run: |
           set -e
           REQ=$(ls private-src/**/requirements*.txt 2>/dev/null | head -n1 || true)
           if [ -n "$REQ" ]; then
             echo "[INFO] Using requirements: $REQ"
-            python -m pip install -r "$REQ" -c /tmp/constraints.txt --extra-index-url https://download.pytorch.org/whl/cpu
+            pip install -r "$REQ"
           else
             echo "[INFO] No requirements*.txt found — install tối thiểu"
-            python -m pip install Pillow opencv-python-headless numpy gdown \
-              google-api-python-client google-auth google-auth-httplib2 \
-              imageio-ffmpeg
+            pip install Pillow opencv-python-headless numpy gdown \
+                        google-api-python-client google-auth google-auth-httplib2 \
+                        imageio-ffmpeg
           fi
 
       # CHẠY CODE trong repo PRIVATE (upload YouTube trực tiếp)
