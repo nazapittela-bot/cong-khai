@@ -179,6 +179,7 @@ jobs:
           
           # NEW: inaSpeechSegmenter (lọc nhạc / speech-music segmentation)
           python -m pip install "tensorflow-cpu" 
+          python -m pip install "scikit-image"
           python -m pip install "inaSpeechSegmenter==0.8.0" --no-deps
 
           # (tuỳ chọn) test import cho chắc
