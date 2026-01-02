@@ -181,6 +181,9 @@ jobs:
           python -m pip install "tensorflow-cpu" 
           python -m pip install "scikit-image"
           python -m pip install scipy scikit-learn soundfile
+          # thiếu cái này nên mới nổ
+          python -m pip install pandas
+          
           python -m pip install "inaSpeechSegmenter==0.8.0" --no-deps
 
           # (tuỳ chọn) test import cho chắc
