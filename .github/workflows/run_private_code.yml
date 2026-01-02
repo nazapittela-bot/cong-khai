@@ -37,9 +37,7 @@ jobs:
       CUDA_VISIBLE_DEVICES: "-1"
       TF_CPP_MIN_LOG_LEVEL: "2"
 
-      INA_MAX_ANALYZE_SEC: "43200"   # 12 tiếng
-      INA_CHUNK_SEC: "600"           # 10 phút/chunk
-
+    
 
 
     steps:
