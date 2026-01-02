@@ -23,7 +23,7 @@ jobs:
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
 
       # chon thumb tieude bat dau
-      SEQ_BASE_RUN: "43"
+      SEQ_BASE_RUN: "44"
       TITLE_START: "10"
       THUMB_START: "10"
 
@@ -36,6 +36,9 @@ jobs:
 
       CUDA_VISIBLE_DEVICES: "-1"
       TF_CPP_MIN_LOG_LEVEL: "2"
+
+      INA_MAX_ANALYZE_SEC: "32400"   # 9 tiếng
+      INA_CHUNK_SEC: "600"           # 10 phút/chunk
 
 
 
