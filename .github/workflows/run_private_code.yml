@@ -1,7 +1,10 @@
 name: run-private-code
 
 on:
-  
+  schedule:
+    - cron: "0 21 * * *"  # chạy 4h sáng 
+    - cron: "0 3 * * *"   # chạy 10h sáng 
+    - cron: "0 9 * * *"   # chạy 4h chiều 
     
     
   workflow_dispatch: {}
@@ -23,9 +26,9 @@ jobs:
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
 
       # chon thumb tieude bat dau
-      SEQ_BASE_RUN: "49"
-      TITLE_START: "10"
-      THUMB_START: "10"
+      SEQ_BASE_RUN: "8"
+      TITLE_START: "3"
+      THUMB_START: "3"
 
       # công tắt chọn poll hoặc cloudflare
       IMG_PROVIDER: cloudflare
@@ -33,8 +36,6 @@ jobs:
       CF_API_TOKEN:  ${{ secrets.CF_API_TOKEN }}
       CF_MODEL: "@cf/black-forest-labs/flux-1-schnell"
       CF_STEPS: "8"
-
-    
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
@@ -61,7 +62,7 @@ jobs:
       - name: Resolve parameters (support schedule without inputs)
         id: params
         run: |
-          repo="${{ inputs.private_repo }}"; [ -z "$repo" ] && repo="nazapittela-bot/rieng-tu"; echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          repo="${{ inputs.private_repo }}"; [ -z "$repo" ] && repo="kuzeycoban35-tech/ri-ng-tu"; echo "repo=$repo" >> "$GITHUB_OUTPUT"
           ref="${{ inputs.private_ref }}";   [ -z "$ref" ] && ref="main";                                           echo "ref=$ref"   >> "$GITHUB_OUTPUT"
           wd="${{ inputs.workdir }}";        [ -z "$wd" ]  && wd=".";                                               echo "workdir=$wd" >> "$GITHUB_OUTPUT"
           privacy="${{ inputs.youtube_privacy }}"; [ -z "$privacy" ] && privacy="public";                           echo "privacy=$privacy" >> "$GITHUB_OUTPUT"
@@ -173,15 +174,8 @@ jobs:
           python -m pip install "torch==2.3.1" "torchaudio==2.3.1" --index-url https://download.pytorch.org/whl/cpu
           # Whisper (gói đúng tên: openai-whisper)
           python -m pip install "openai-whisper==20231117"
-          
-          # NEW: inaSpeechSegmenter (lọc nhạc / speech-music segmentation)
-       
-          python -m pip install "inaSpeechSegmenter==0.8.0"
-  
-
-          # (tuỳ chọn) test import cho chắc
-          python -c "from inaSpeechSegmenter import Segmenter; print('inaSpeechSegmenter OK')"
-
+          # loc banner qr
+          python -m pip install opencv-python-headless
           # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
           python -c "import sys; import whisper, torch, torchaudio; print('Whisper/Torch OK:', whisper.__version__, torch.__version__)"
 
