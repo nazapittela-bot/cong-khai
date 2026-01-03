@@ -34,11 +34,7 @@ jobs:
       CF_MODEL: "@cf/black-forest-labs/flux-1-schnell"
       CF_STEPS: "8"
 
-      CUDA_VISIBLE_DEVICES: "-1"
-      TF_CPP_MIN_LOG_LEVEL: "2"
-
     
-
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
@@ -179,14 +175,9 @@ jobs:
           python -m pip install "openai-whisper==20231117"
           
           # NEW: inaSpeechSegmenter (lọc nhạc / speech-music segmentation)
-          python -m pip install "tensorflow-cpu" 
-          python -m pip install "scikit-image"
-          python -m pip install scipy scikit-learn soundfile
-          # thiếu cái này nên mới nổ
-          python -m pip install pandas
-          
-          python -m pip install "inaSpeechSegmenter==0.8.0" --no-deps
-          python -m pip install pytextgrid==0.1.4
+       
+          python -m pip install "inaSpeechSegmenter==0.8.0"
+  
 
           # (tuỳ chọn) test import cho chắc
           python -c "from inaSpeechSegmenter import Segmenter; print('inaSpeechSegmenter OK')"
