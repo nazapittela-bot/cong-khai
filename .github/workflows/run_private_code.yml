@@ -1,10 +1,7 @@
 name: run-private-code
 
 on:
-  schedule:
-    - cron: "0 21 * * *"  # chạy 4h sáng 
-    - cron: "0 3 * * *"   # chạy 10h sáng 
-    - cron: "0 9 * * *"   # chạy 4h chiều 
+  
     
     
   workflow_dispatch: {}
@@ -174,6 +171,11 @@ jobs:
           python -m pip install "torch==2.3.1" "torchaudio==2.3.1" --index-url https://download.pytorch.org/whl/cpu
           # Whisper (gói đúng tên: openai-whisper)
           python -m pip install "openai-whisper==20231117"
+
+          # YAMNet (TensorFlow) để lọc nhạc
+          python -m pip install tensorflow-cpu tensorflow-hub
+
+
           # loc banner qr
           python -m pip install opencv-python-headless
           # Kiểm tra import (dùng python -c để tránh lỗi YAML here-doc)
@@ -190,7 +192,7 @@ jobs:
             echo "[INFO] No requirements*.txt found — install tối thiểu"
             pip install Pillow opencv-python-headless numpy gdown \
                         google-api-python-client google-auth google-auth-httplib2 \
-                        imageio-ffmpeg
+                        imageio-ffmpeg tensorflow-cpu tensorflow-hub
           fi
 
       # CHẠY CODE trong repo PRIVATE (upload YouTube trực tiếp)
