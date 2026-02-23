@@ -2,8 +2,7 @@ name: run-private-code
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # 11:00 VN (LƯU Ý: GitHub cron chạy theo UTC)
-    - cron: '0 9 * * *'   # 13:00 VN (LƯU Ý: GitHub cron chạy theo UTC)
+    - cron: '0 10 * * *'   # 11:00 VN (LƯU Ý: GitHub cron chạy theo UTC)
   workflow_dispatch: {}
 
 jobs:
