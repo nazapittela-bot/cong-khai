@@ -1,7 +1,10 @@
 name: run-private-code
 
 on:
-  
+  schedule:
+    - cron: '0 21 * * *'   # 11:00 VN
+    - cron: '0 3 * * *'   # 13:00 VN
+    - cron: '0 9 * * *'   # 16:00 VN
     
   workflow_dispatch: {}
 
@@ -21,16 +24,16 @@ jobs:
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
 
       # chon thumb tieude bat dau
-      SEQ_BASE_RUN: "199"
-      TITLE_START: "62"
-      THUMB_START: "62"
+      SEQ_BASE_RUN: "262"
+      TITLE_START: "1"
+      THUMB_START: "1"
 
       # công tắt chọn poll hoặc cloudflare
       IMG_PROVIDER: cloudflare
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       CF_API_TOKEN:  ${{ secrets.CF_API_TOKEN }}
       CF_MODEL: "@cf/black-forest-labs/flux-1-schnell"
-      CF_STEPS: "4"
+      CF_STEPS: "8"
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
